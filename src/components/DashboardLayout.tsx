@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { Logo } from "./Logo";
-import { LayoutDashboard, Calendar, Image as ImageIcon, CreditCard, MessageCircle, Users, Settings, LogOut, Bell } from "lucide-react";
+import { LayoutDashboard, Calendar, Image as ImageIcon, CreditCard, MessageCircle, Users, Settings, LogOut, Bell, BarChart3, User } from "lucide-react";
 
 export function DashboardLayout({ role = "customer" }: { role?: "customer" | "admin" }) {
   const loc = useLocation();
@@ -9,9 +9,13 @@ export function DashboardLayout({ role = "customer" }: { role?: "customer" | "ad
       ? [
           { to: "/admin", label: "Overview", icon: LayoutDashboard },
           { to: "/admin/bookings", label: "Bookings", icon: Calendar },
+          { to: "/admin/calendar", label: "Calendar", icon: Calendar },
           { to: "/admin/customers", label: "Customers", icon: Users },
           { to: "/admin/gallery", label: "Gallery", icon: ImageIcon },
           { to: "/admin/payments", label: "Payments", icon: CreditCard },
+          { to: "/admin/messages", label: "Messages", icon: MessageCircle },
+          { to: "/admin/reports", label: "Reports", icon: BarChart3 },
+          { to: "/admin/settings", label: "Settings", icon: Settings },
         ]
       : [
           { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -19,13 +23,14 @@ export function DashboardLayout({ role = "customer" }: { role?: "customer" | "ad
           { to: "/dashboard/media", label: "My Media", icon: ImageIcon },
           { to: "/dashboard/invoices", label: "Invoices", icon: CreditCard },
           { to: "/dashboard/messages", label: "Messages", icon: MessageCircle },
+          { to: "/dashboard/profile", label: "Profile", icon: User },
         ];
 
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="hidden md:flex flex-col w-64 border-r border-sidebar-border bg-sidebar p-5">
         <Logo />
-        <nav className="mt-10 flex-1 space-y-1">
+        <nav className="mt-10 flex-1 space-y-1 overflow-y-auto">
           {navs.map((n) => {
             const active = loc.pathname === n.to;
             return (
@@ -45,9 +50,6 @@ export function DashboardLayout({ role = "customer" }: { role?: "customer" | "ad
           })}
         </nav>
         <div className="space-y-1 pt-4 border-t border-sidebar-border">
-          <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">
-            <Settings className="h-4 w-4" /> Settings
-          </Link>
           <Link to="/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive">
             <LogOut className="h-4 w-4" /> Sign out
           </Link>
