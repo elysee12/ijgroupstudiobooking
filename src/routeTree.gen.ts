@@ -11,10 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as BookingSuccessRouteImport } from './routes/booking-success'
 import { Route as BookingRouteImport } from './routes/booking'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
@@ -34,6 +37,8 @@ import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminCustomersRouteImport } from './routes/admin.customers'
 import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
 import { Route as AdminBookingsRouteImport } from './routes/admin.bookings'
+import { Route as AdminCustomersIdRouteImport } from './routes/admin.customers.$id'
+import { Route as AdminBookingsIdRouteImport } from './routes/admin.bookings.$id'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -43,6 +48,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -55,6 +65,11 @@ const GalleryRoute = GalleryRouteImport.update({
   path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -63,6 +78,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingSuccessRoute = BookingSuccessRouteImport.update({
+  id: '/booking-success',
+  path: '/booking-success',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookingRoute = BookingRouteImport.update({
@@ -160,21 +180,34 @@ const AdminBookingsRoute = AdminBookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCustomersIdRoute = AdminCustomersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCustomersRoute,
+} as any)
+const AdminBookingsIdRoute = AdminBookingsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminBookingsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/booking': typeof BookingRoute
+  '/booking-success': typeof BookingSuccessRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/services': typeof ServicesRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/bookings': typeof AdminBookingsRouteWithChildren
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -187,19 +220,24 @@ export interface FileRoutesByFullPath {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/booking': typeof BookingRoute
+  '/booking-success': typeof BookingSuccessRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/services': typeof ServicesRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/bookings': typeof AdminBookingsRouteWithChildren
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -212,6 +250,8 @@ export interface FileRoutesByTo {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,15 +259,18 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/booking': typeof BookingRoute
+  '/booking-success': typeof BookingSuccessRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/services': typeof ServicesRoute
-  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/bookings': typeof AdminBookingsRouteWithChildren
   '/admin/calendar': typeof AdminCalendarRoute
-  '/admin/customers': typeof AdminCustomersRoute
+  '/admin/customers': typeof AdminCustomersRouteWithChildren
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/payments': typeof AdminPaymentsRoute
@@ -240,6 +283,8 @@ export interface FileRoutesById {
   '/dashboard/profile': typeof DashboardProfileRoute
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/admin/bookings/$id': typeof AdminBookingsIdRoute
+  '/admin/customers/$id': typeof AdminCustomersIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,10 +293,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/booking'
+    | '/booking-success'
     | '/contact'
     | '/dashboard'
+    | '/faq'
     | '/gallery'
     | '/login'
+    | '/pricing'
     | '/register'
     | '/services'
     | '/admin/bookings'
@@ -269,14 +317,19 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/admin/'
     | '/dashboard/'
+    | '/admin/bookings/$id'
+    | '/admin/customers/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/booking'
+    | '/booking-success'
     | '/contact'
+    | '/faq'
     | '/gallery'
     | '/login'
+    | '/pricing'
     | '/register'
     | '/services'
     | '/admin/bookings'
@@ -294,16 +347,21 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/admin'
     | '/dashboard'
+    | '/admin/bookings/$id'
+    | '/admin/customers/$id'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
     | '/booking'
+    | '/booking-success'
     | '/contact'
     | '/dashboard'
+    | '/faq'
     | '/gallery'
     | '/login'
+    | '/pricing'
     | '/register'
     | '/services'
     | '/admin/bookings'
@@ -321,6 +379,8 @@ export interface FileRouteTypes {
     | '/dashboard/profile'
     | '/admin/'
     | '/dashboard/'
+    | '/admin/bookings/$id'
+    | '/admin/customers/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,10 +388,13 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   BookingRoute: typeof BookingRoute
+  BookingSuccessRoute: typeof BookingSuccessRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
   LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   ServicesRoute: typeof ServicesRoute
 }
@@ -352,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -366,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -378,6 +455,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking-success': {
+      id: '/booking-success'
+      path: '/booking-success'
+      fullPath: '/booking-success'
+      preLoaderRoute: typeof BookingSuccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/booking': {
@@ -513,13 +597,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBookingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/customers/$id': {
+      id: '/admin/customers/$id'
+      path: '/$id'
+      fullPath: '/admin/customers/$id'
+      preLoaderRoute: typeof AdminCustomersIdRouteImport
+      parentRoute: typeof AdminCustomersRoute
+    }
+    '/admin/bookings/$id': {
+      id: '/admin/bookings/$id'
+      path: '/$id'
+      fullPath: '/admin/bookings/$id'
+      preLoaderRoute: typeof AdminBookingsIdRouteImport
+      parentRoute: typeof AdminBookingsRoute
+    }
   }
 }
 
+interface AdminBookingsRouteChildren {
+  AdminBookingsIdRoute: typeof AdminBookingsIdRoute
+}
+
+const AdminBookingsRouteChildren: AdminBookingsRouteChildren = {
+  AdminBookingsIdRoute: AdminBookingsIdRoute,
+}
+
+const AdminBookingsRouteWithChildren = AdminBookingsRoute._addFileChildren(
+  AdminBookingsRouteChildren,
+)
+
+interface AdminCustomersRouteChildren {
+  AdminCustomersIdRoute: typeof AdminCustomersIdRoute
+}
+
+const AdminCustomersRouteChildren: AdminCustomersRouteChildren = {
+  AdminCustomersIdRoute: AdminCustomersIdRoute,
+}
+
+const AdminCustomersRouteWithChildren = AdminCustomersRoute._addFileChildren(
+  AdminCustomersRouteChildren,
+)
+
 interface AdminRouteChildren {
-  AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminBookingsRoute: typeof AdminBookingsRouteWithChildren
   AdminCalendarRoute: typeof AdminCalendarRoute
-  AdminCustomersRoute: typeof AdminCustomersRoute
+  AdminCustomersRoute: typeof AdminCustomersRouteWithChildren
   AdminGalleryRoute: typeof AdminGalleryRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
@@ -529,9 +651,9 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminBookingsRoute: AdminBookingsRoute,
+  AdminBookingsRoute: AdminBookingsRouteWithChildren,
   AdminCalendarRoute: AdminCalendarRoute,
-  AdminCustomersRoute: AdminCustomersRoute,
+  AdminCustomersRoute: AdminCustomersRouteWithChildren,
   AdminGalleryRoute: AdminGalleryRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
@@ -569,10 +691,13 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   BookingRoute: BookingRoute,
+  BookingSuccessRoute: BookingSuccessRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
   LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   ServicesRoute: ServicesRoute,
 }
