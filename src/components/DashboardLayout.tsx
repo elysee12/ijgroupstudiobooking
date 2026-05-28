@@ -50,7 +50,7 @@ export function DashboardLayout({ role = "customer" }: { role?: "customer" | "ad
           })}
         </nav>
         <div className="space-y-1 pt-4 border-t border-sidebar-border">
-          <Link to="/login" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive">
+          <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-destructive">
             <LogOut className="h-4 w-4" /> Sign out
           </Link>
         </div>
