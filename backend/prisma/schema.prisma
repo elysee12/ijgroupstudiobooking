@@ -1,0 +1,596 @@
+// ============================================================
+// IJ Group Studio — Prisma Schema
+// Database: MySQL
+// ============================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+enum ServiceType {
+  WEDDING_PHOTOGRAPHY
+  STUDIO_PHOTOSHOOT
+  GRADUATION_PHOTOGRAPHY
+  BIRTHDAY_COVERAGE
+  DRONE_VIDEOGRAPHY
+  MUSIC_VIDEO
+  LIVESTREAMING
+  CORPORATE_EVENT
+}
+
+enum ShootType {
+  STUDIO
+  HOME
+  EVENT
+}
+
+enum BookingStatus {
+  PENDING
+  NEGOTIATION
+  AWAITING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MTN_MOMO
+  AIRTEL_MONEY
+  VISA_CARD
+  BANK_TRANSFER
+}
+
+enum PaymentType {
+  DEPOSIT
+  INSTALLMENT
+  FINAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum PackageName {
+  ESSENTIAL
+  SIGNATURE
+  PRODUCTION
+}
+
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  /// Human-readable reference, e.g. "IJ-C-0042"
+  ref       String   @unique @db.VarChar(20)
+  fullName  String   @db.VarChar(120)
+  /// Primary login identifier
+  phone     String   @unique @db.VarChar(20)
+  email     String?  @unique @db.VarChar(120)
+  password  String   @db.VarChar(255)
+  address   String?  @db.VarChar(255)
+  avatarUrl String?  @db.VarChar(500)
+  role      Role     @default(CUSTOMER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  preferences       UserPreferences?
+  bookings          Booking[]          @relation("CustomerBookings")
+  payments          Payment[]
+  invoices          Invoice[]
+  notes             CustomerNote[]
+  conversations     Conversation[]     @relation("CustomerConversations")
+  messages          Message[]
+  crewProfile       CrewMember?
+  otpCodes          OtpCode[]
+  activityLogs      BookingActivity[]  @relation("ActivityCreatedBy")
+
+  @@map("users")
+}
+
+// ============================================================
+// USER PREFERENCES
+// ============================================================
+
+model UserPreferences {
+  id                Int     @id @default(autoincrement())
+  userId            Int     @unique
+  emailNotifications Boolean @default(true)
+  smsReminders      Boolean @default(true)
+  marketingUpdates  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// ============================================================
+// OTP (phone verification)
+// ============================================================
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  phone     String   @db.VarChar(20)
+  code      String   @db.VarChar(6)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone])
+  @@map("otp_codes")
+}
+
+// ============================================================
+// SERVICE CATALOG
+// ============================================================
+
+model Service {
+  id          Int         @id @default(autoincrement())
+  type        ServiceType @unique
+  name        String      @db.VarChar(100)
+  description String?     @db.Text
+  basePrice   Int         /// Price in RWF
+  category    String      @db.VarChar(60)
+  iconName    String?     @db.VarChar(60)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  bookings Booking[]
+
+  @@map("services")
+}
+
+// ============================================================
+// PRICING PACKAGES
+// ============================================================
+
+model PricingPackage {
+  id          Int         @id @default(autoincrement())
+  name        PackageName @unique
+  subtitle    String      @db.VarChar(120)
+  price       Int?        /// null = negotiable
+  isFeatured  Boolean     @default(false)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  features PackageFeature[]
+
+  @@map("pricing_packages")
+}
+
+model PackageFeature {
+  id        Int    @id @default(autoincrement())
+  packageId Int
+  text      String @db.VarChar(200)
+  sortOrder Int    @default(0)
+
+  package PricingPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@map("package_features")
+}
+
+// ============================================================
+// ADD-ONS
+// ============================================================
+
+model AddOn {
+  id         Int    @id @default(autoincrement())
+  name       String @db.VarChar(100)
+  price      Int    /// Price in RWF
+  priceUnit  String @db.VarChar(30) /// e.g. "/ hr", "/ day", "flat"
+  isActive   Boolean @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookingAddOns BookingAddOn[]
+
+  @@map("add_ons")
+}
+
+// ============================================================
+// BOOKING
+// ============================================================
+
+model Booking {
+  id              Int           @id @default(autoincrement())
+  /// Human-readable reference, e.g. "IJ-1051"
+  ref             String        @unique @db.VarChar(20)
+  customerId      Int
+  serviceId       Int
+  shootType       ShootType
+  eventDate       DateTime
+  location        String        @db.VarChar(255)
+  brief           String?       @db.Text  /// Customer's description / notes
+  status          BookingStatus @default(PENDING)
+  estimatedAmount Int?          /// Admin's initial estimate in RWF
+  finalAmount     Int?          /// Agreed final amount in RWF
+  depositAmount   Int?          /// 30% of finalAmount
+  depositPaid     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  customer    User              @relation("CustomerBookings", fields: [customerId], references: [id])
+  service     Service           @relation(fields: [serviceId], references: [id])
+  payments    Payment[]
+  invoice     Invoice?
+  crew        BookingCrew[]
+  addOns      BookingAddOn[]
+  activities  BookingActivity[]
+  conversation Conversation?
+  albums      Album[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([eventDate])
+  @@map("bookings")
+}
+
+// ============================================================
+// BOOKING ADD-ONS (join table)
+// ============================================================
+
+model BookingAddOn {
+  id        Int @id @default(autoincrement())
+  bookingId Int
+  addOnId   Int
+  quantity  Int @default(1)
+  unitPrice Int /// Snapshot of price at time of booking (RWF)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addOn   AddOn   @relation(fields: [addOnId], references: [id])
+
+  @@unique([bookingId, addOnId])
+  @@map("booking_add_ons")
+}
+
+// ============================================================
+// CREW MEMBER
+// ============================================================
+
+model CrewMember {
+  id       Int    @id @default(autoincrement())
+  userId   Int    @unique
+  jobTitle String @db.VarChar(100) /// e.g. "Lead Photographer", "Drone Operator"
+  bio      String? @db.Text
+  isActive Boolean @default(true)
+
+  user     User          @relation(fields: [userId], references: [id])
+  bookings BookingCrew[]
+
+  @@map("crew_members")
+}
+
+// ============================================================
+// BOOKING CREW (join table)
+// ============================================================
+
+model BookingCrew {
+  id           Int    @id @default(autoincrement())
+  bookingId    Int
+  crewMemberId Int
+  /// Role for this specific booking, e.g. "2nd photographer"
+  roleOverride String? @db.VarChar(100)
+
+  booking    Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  crewMember CrewMember @relation(fields: [crewMemberId], references: [id])
+
+  @@unique([bookingId, crewMemberId])
+  @@map("booking_crew")
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+
+model Payment {
+  id          Int           @id @default(autoincrement())
+  /// Human-readable reference, e.g. "TX-9042"
+  ref         String        @unique @db.VarChar(20)
+  bookingId   Int
+  customerId  Int
+  amount      Int           /// Amount in RWF
+  method      PaymentMethod
+  type        PaymentType
+  status      PaymentStatus @default(PENDING)
+  /// Mobile money phone number (for MTN_MOMO / AIRTEL_MONEY)
+  mobilePhone String?       @db.VarChar(20)
+  /// External gateway transaction ID
+  gatewayRef  String?       @db.VarChar(100)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  customer User    @relation(fields: [customerId], references: [id])
+
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ============================================================
+// INVOICE
+// ============================================================
+
+model Invoice {
+  id         Int           @id @default(autoincrement())
+  /// Human-readable reference, e.g. "INV-2042"
+  ref        String        @unique @db.VarChar(20)
+  bookingId  Int           @unique
+  customerId Int
+  amount     Int           /// Total amount in RWF
+  status     InvoiceStatus @default(PENDING)
+  pdfUrl     String?       @db.VarChar(500)
+  issuedAt   DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  customer User    @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("invoices")
+}
+
+// ============================================================
+// MESSAGING
+// ============================================================
+
+model Conversation {
+  id             Int      @id @default(autoincrement())
+  customerId     Int
+  bookingId      Int?     @unique /// Optional link to a specific booking
+  lastMessage    String?  @db.VarChar(500)
+  lastMessageAt  DateTime?
+  unreadByAdmin  Int      @default(0)
+  unreadByCustomer Int    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customer User      @relation("CustomerConversations", fields: [customerId], references: [id])
+  booking  Booking?  @relation(fields: [bookingId], references: [id])
+  messages Message[]
+
+  @@index([customerId])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String   @db.Text
+  isFromAdmin    Boolean  @default(false)
+  sentAt         DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+// ============================================================
+// MEDIA GALLERY
+// ============================================================
+
+model Album {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(150)
+  bookingId    Int?     /// null = public/marketing album
+  customerId   Int?     /// null = public/marketing album
+  category     String   @db.VarChar(60) /// "Weddings", "Fashion", "Birthdays", etc.
+  coverUrl     String?  @db.LongText
+  isPublic     Boolean  @default(false) /// true = visible in public gallery
+  isWatermarked Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  booking    Booking?    @relation(fields: [bookingId], references: [id])
+  files      MediaFile[]
+
+  @@index([bookingId])
+  @@index([isPublic])
+  @@map("albums")
+}
+
+model MediaFile {
+  id            Int       @id @default(autoincrement())
+  albumId       Int
+  url           String    @db.LongText
+  type          MediaType
+  isWatermarked Boolean   @default(true)
+  fileSize      Int?      /// Size in bytes
+  mimeType      String?   @db.VarChar(60)
+  createdAt     DateTime  @default(now())
+
+  album Album @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId])
+  @@map("media_files")
+}
+
+// ============================================================
+// CUSTOMER NOTES (admin-only)
+// ============================================================
+
+model CustomerNote {
+  id         Int      @id @default(autoincrement())
+  customerId Int
+  content    String   @db.Text
+  addedById  Int      /// FK to the staff/admin who wrote the note
+  createdAt  DateTime @default(now())
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@map("customer_notes")
+}
+
+// ============================================================
+// BOOKING ACTIVITY LOG
+// ============================================================
+
+model BookingActivity {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int
+  description String   @db.VarChar(255) /// e.g. "Deposit received — MTN MoMo"
+  createdById Int?     /// null = system-generated
+  createdAt   DateTime @default(now())
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("ActivityCreatedBy", fields: [createdById], references: [id])
+
+  @@index([bookingId])
+  @@map("booking_activities")
+}
+
+// ============================================================
+// CONTACT INQUIRIES (pre-auth, public contact form)
+// ============================================================
+
+model ContactInquiry {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(120)
+  phone     String   @db.VarChar(20)
+  subject   String   @db.VarChar(200)
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_inquiries")
+}
+
+// ============================================================
+// STUDIO SETTINGS (singleton — always id = 1)
+// ============================================================
+
+model StudioSettings {
+  id              Int     @id @default(1)
+  studioName      String  @db.VarChar(120)
+  phone           String  @db.VarChar(20)
+  email           String  @db.VarChar(120)
+  location        String  @db.VarChar(255)
+  about           String? @db.Text
+  requireDeposit  Boolean @default(true)
+  depositPercent  Int     @default(30)
+  autoWatermark   Boolean @default(true)
+  sendSmsOnBooking Boolean @default(true)
+  allowWhatsApp   Boolean @default(true)
+  updatedAt       DateTime @updatedAt
+
+  paymentIntegrations PaymentIntegration[]
+
+  @@map("studio_settings")
+}
+
+// ============================================================
+// PAYMENT INTEGRATIONS
+// ============================================================
+
+model PaymentIntegration {
+  id               Int    @id @default(autoincrement())
+  studioSettingsId Int
+  provider         String @db.VarChar(60) /// "MTN_MOMO", "AIRTEL_MONEY", "STRIPE", "BANK_OF_KIGALI"
+  isConnected      Boolean @default(false)
+  /// Encrypted API key / token — never expose in responses
+  apiKey           String? @db.VarChar(500)
+  updatedAt        DateTime @updatedAt
+
+  studioSettings StudioSettings @relation(fields: [studioSettingsId], references: [id], onDelete: Cascade)
+
+  @@unique([studioSettingsId, provider])
+  @@map("payment_integrations")
+}
+
+// ============================================================
+// HOMEPAGE — FEATURED SERVICES
+// Admin-managed cards shown in the "WHAT WE DO" section
+// ============================================================
+
+model FeaturedService {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(120)
+  description String   @db.Text
+  price       String   @db.VarChar(80)  /// Display string e.g. "From 350,000 RWF"
+  iconName    String   @db.VarChar(60)  /// Lucide icon name e.g. "Heart", "Camera"
+  sortOrder   Int      @default(0)
+  isVisible   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("featured_services")
+}
+
+// ============================================================
+// HOMEPAGE — RECENT WORK
+// Admin-managed portfolio preview shown in "FROM THE STUDIO"
+// ============================================================
+
+model HomepageWork {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(120)
+  imageUrl  String   @db.LongText
+  category  String   @db.VarChar(60)
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("homepage_work")
+}
+
+// ============================================================
+// HOMEPAGE — TESTIMONIALS
+// Admin-managed client quotes
+// ============================================================
+
+model Testimonial {
+  id         Int      @id @default(autoincrement())
+  clientName String   @db.VarChar(100)
+  quote      String   @db.Text
+  rating     Int      @default(5)
+  sortOrder  Int      @default(0)
+  isVisible  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
